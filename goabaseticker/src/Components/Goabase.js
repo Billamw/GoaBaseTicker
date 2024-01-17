@@ -1,27 +1,31 @@
 import React, { useEffect, useState } from "react";
 
-function GoaBase() {
+function GoaBase({ cityName, coordinates }) {
     const [data, setData] = useState([]);
 
     useEffect(() => {
-        fetch("https://www.goabase.net/de/api/party/json/")
+        fetch("https://www.goabase.net/de/api/party/json/?nameTown=cologne")
             .then((response) => response.json())
             .then((data) => {
-                // Zugriff auf das 'parties' Feld des JSON-Objekts
-                const parties = data.parties;
+                // Zugriff auf das 'partylist' Feld des JSON-Objekts
+                const parties = data.partylist;
 
-                // Überprüfen, ob 'parties' ein Array ist
+                // Überprüfen, ob 'partylist' ein Array ist
                 if (Array.isArray(parties)) {
-                    const sortedData = parties.sort((a, b) => {
-                        if (a.country < b.country) {
-                            return -1;
-                        }
-                        if (a.country > b.country) {
-                            return 1;
-                        }
-                        return 0;
+                    const filteredData = parties.filter(
+                        (party) => party.nameTown === cityName
+                    );
+                    const sortedData = filteredData.sort((a, b) => {
+                        // Konvertieren der 'dateStart'-Strings in Date-Objekte für den Vergleich
+                        const dateA = new Date(a.dateStart);
+                        const dateB = new Date(b.dateStart);
+
+                        return dateA - dateB;
                     });
                     setData(sortedData);
+                    if (sortedData.length > 0) {
+                        console.log(sortedData[0]);
+                    }
                 } else {
                     console.error("Error: Parties data is not an array");
                 }
@@ -29,11 +33,26 @@ function GoaBase() {
             .catch((error) => console.error("Error:", error));
     }, []);
 
+    const convertDate = (date) => {
+        const dateObj = new Date(date);
+        const options = { year: "numeric", month: "long", day: "numeric" };
+        return dateObj.toLocaleDateString("de-DE", options);
+    };
+
     return (
         <div>
             {data.map((item, index) => (
                 <div key={index}>
-                    <h2>{item.country}</h2>
+                    <img
+                        src={item.urlImageFull}
+                        alt="Bild"
+                        style={{ height: "300px" }}
+                    />
+                    <h2>{item.nameParty}</h2>
+                    <h3>
+                        {" "}
+                        {convertDate(item.dateStart)}, {item.nameTown}
+                    </h3>
                     {/* Add other fields you want to display */}
                 </div>
             ))}
