@@ -3,6 +3,24 @@ import React, { useEffect, useState } from "react";
 function GoaBase({ cityName, coordinates }) {
     const [data, setData] = useState([]);
 
+    const [starredParties, setStarredParties] = useState(() => {
+        const saved = localStorage.getItem("starredParties");
+        const initialValue = JSON.parse(saved);
+        return initialValue || [];
+    });
+
+    const toggleStar = (party) => {
+        const isStarred = starredParties.includes(party);
+        const newStarredParties = isStarred
+            ? starredParties.filter((p) => p !== party)
+            : [...starredParties, party];
+        setStarredParties(newStarredParties);
+    };
+
+    useEffect(() => {
+        localStorage.setItem("starredParties", JSON.stringify(starredParties));
+    }, [starredParties]);
+
     useEffect(() => {
         fetch("https://www.goabase.net/de/api/party/json/?nameTown=cologne")
             .then((response) => response.json())
@@ -42,7 +60,7 @@ function GoaBase({ cityName, coordinates }) {
     return (
         <div>
             {data.map((item, index) => (
-                <div key={index}>
+                <div className="party" key={index}>
                     <img
                         src={item.urlImageFull}
                         alt="Bild"
@@ -51,9 +69,30 @@ function GoaBase({ cityName, coordinates }) {
                     <h2>{item.nameParty}</h2>
                     <h3>
                         {" "}
-                        {convertDate(item.dateStart)}, {item.nameTown}
+                        {convertDate(item.dateStart)}, {item.nameTown},{" "}
+                        <a
+                            href={item.urlPartyHtml}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Website
+                        </a>
                     </h3>
-                    {/* Add other fields you want to display */}
+                    <i
+                        className="material-icons"
+                        style={{
+                            color: starredParties.includes(item.nameParty)
+                                ? "yellow"
+                                : "none",
+                            position: "relative",
+                            bottom: 0,
+                            right: 0,
+                            cursor: "pointer",
+                        }}
+                        onClick={() => toggleStar(item.nameParty)}
+                    >
+                        star
+                    </i>
                 </div>
             ))}
         </div>
